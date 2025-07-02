@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Web Page Element Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Roboto', 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #f1f3f4;
+            color: #202124;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            text-align: left;
+            color: #1a73e8;
+            padding: 16px 24px;
+            margin: 0;
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+            font-weight: 400;
+            font-size: 1.375rem;
+            border-bottom: 1px solid #dadce0;
+        }
+        #chatInterface {
+            padding: 16px 24px;
+            border-bottom: 1px solid #dadce0;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        #chatMessages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dadce0;
+            padding: 16px;
+            margin-bottom: 16px;
+            background-color: #ffffff;
+            border-radius: 4px;
+        }
+        .message {
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            border-radius: 20px;
+            line-height: 1.5;
+            max-width: 80%;
+            word-wrap: break-word;
+            font-size: 0.9rem;
+        }
+        .user-message {
+            background-color: #1a73e8;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 6px;
+        }
+        .ai-message {
+            background-color: #f1f3f4;
+            color: #202124;
+            margin-right: auto;
+            border-bottom-left-radius: 6px;
+        }
+        .ai-message pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #e8eaed;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-size: 0.85em;
+            border: 1px solid #dadce0;
+            overflow-x: auto;
+        }
+        #userInputArea {
+            display: flex;
+            margin-top: auto;
+        }
+        #userInput {
+            flex-grow: 1;
+            padding: 10px 16px;
+            border: 1px solid #dadce0;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        #userInput:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26,115,232,.2);
+        }
+        #sendButton {
+            padding: 10px 20px;
+            margin-left: 8px;
+            border: none;
+            background-color: #1a73e8;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+        #sendButton:hover {
+            background-color: #1765cc;
+        }
+        #htmlOutputContainer {
+            padding: 16px 24px;
+            background-color: #f8f9fa;
+             border-top: 1px solid #dadce0;
+        }
+        #htmlOutputContainer h2 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            color: #3c4043;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        #htmlOutput {
+            border: 1px solid #dadce0;
+            padding: 16px;
+            min-height: 150px;
+            background-color: #ffffff;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+        #htmlCodeOutput {
+            width: 100%;
+            box-sizing: border-box;
+            min-height: 150px;
+            margin-top: 8px;
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            border: 1px solid #dadce0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            color: #202124;
+            border-radius: 4px;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+        #chatMessages::-webkit-scrollbar { width: 8px; }
+        #chatMessages::-webkit-scrollbar-track { background: #f1f3f4; border-radius: 4px; }
+        #chatMessages::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 4px; }
+        #chatMessages::-webkit-scrollbar-thumb:hover { background: #bdc1c6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Web Page Element Generator</h1>
+        <div id="chatInterface">
+            <div id="chatMessages"></div>
+            <div id="userInputArea">
+                <input type="text" id="userInput" placeholder="e.g., create file app/page.tsx with a heading 'Welcome'">
+                <button id="sendButton">Send</button>
+            </div>
+        </div>
+        <div id="htmlOutputContainer">
+            <h2>Rendered Output:</h2>
+            <div id="htmlOutput"><p><i>No content generated yet.</i></p></div>
+            <h2>Generated HTML Code:</h2>
+            <textarea id="htmlCodeOutput" readonly placeholder="// No file selected or created..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userInputEl = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton');
+            const chatMessagesEl = document.getElementById('chatMessages');
+            const htmlOutputEl = document.getElementById('htmlOutput');
+            const htmlCodeOutputEl = document.getElementById('htmlCodeOutput');
+
+            let virtualFileSystem = {};
+            let currentOpenFile = "app/page.tsx"; // Default file
+            ensureFileExists(currentOpenFile); // Ensure default file exists initially
+
+            function escapeHtml(unsafe) {
+                if (typeof unsafe !== 'string') return '';
+                return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            }
+
+            function formatDiaResponse(message) {
+                if (typeof message !== 'string') return '';
+                let formattedText = message;
+                // Simple Answer simulation
+                if (formattedText.startsWith('<strong>')) {
+                    const strongEnd = formattedText.indexOf('</strong>');
+                    if (strongEnd !== -1) {
+                        const strongPart = formattedText.substring(0, strongEnd + 9); // Include </strong>
+                        const restPart = escapeHtml(formattedText.substring(strongEnd + 9));
+                        formattedText = strongPart + restPart; // Strong part is already HTML, rest is escaped
+                    } else {
+                        formattedText = escapeHtml(formattedText); // Escape if <strong> is unclosed
+                    }
+                } else {
+                    formattedText = escapeHtml(formattedText);
+                }
+
+                // Ask Dia Hyperlink simulation (on the escaped text)
+                const keywords = ['file', 'heading', 'paragraph', 'button', 'style', 'alert', 'class', 'CSS', 'HTML', 'JavaScript', currentOpenFile];
+                keywords.filter(Boolean).forEach(keyword => {
+                    const escapedKeyword = escapeHtml(keyword);
+                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+                    formattedText = formattedText.replace(regex, `<a href="#" data-ask-query="Tell me more about ${escapedKeyword}" style="color: #1a73e8; text-decoration: underline;">$1</a>`);
+                });
+                return formattedText;
+            }
+
+            function addMessageToChat(message, sender, isCode = false) {
+                const messageEl = document.createElement('div');
+                messageEl.classList.add('message', sender + '-message');
+
+                if (sender === 'ai' && isCode) {
+                    const pre = document.createElement('pre');
+                    pre.textContent = message;
+                    messageEl.appendChild(pre);
+                } else if (sender === 'ai') {
+                    messageEl.innerHTML = formatDiaResponse(message);
+                } else {
+                    messageEl.textContent = escapeHtml(message);
+                }
+                chatMessagesEl.appendChild(messageEl);
+                chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            }
+
+            addMessageToChat("Hello! I'm Dia. How can I help you build something today? (e.g., 'create file app/page.tsx with a heading Welcome')", "ai");
+
+            function renderPagePreview() {
+                const path = currentOpenFile || defaultFilePath;
+                const content = virtualFileSystem[path] || "";
+                htmlOutputEl.innerHTML = content;
+                htmlCodeOutputEl.value = `// --- File: ${path} ---\n\n${content}`;
+            }
+
+            function ensureFileExists(filePath) {
+                if (filePath && !virtualFileSystem.hasOwnProperty(filePath)) {
+                    virtualFileSystem[filePath] = "";
+                }
+            }
+
+            function handleUserInput() {
+                const messageText = userInputEl.value.trim();
+                if (messageText === '') return;
+                addMessageToChat(messageText, 'user');
+                userInputEl.value = '';
+                processUserRequest(messageText);
+            }
+
+            function findLastElementOfTypeInString(htmlContent, elementTypeRegexStr) {
+                if(typeof htmlContent !== 'string') return null;
+                const regex = new RegExp(`<(${elementTypeRegexStr})(\\s|>)`, 'gi');
+                let lastMatch = null;
+                let match;
+                while ((match = regex.exec(htmlContent)) !== null) {
+                    const openingTagEnd = htmlContent.indexOf('>', match.index);
+                    if (openingTagEnd === -1) continue;
+                    lastMatch = {
+                        index: match.index,
+                        tag: match[1],
+                        fullOpeningTagMatch: htmlContent.substring(match.index, openingTagEnd + 1)
+                    };
+                }
+                return lastMatch;
+            }
+
+            function applyStyleToElementInString(htmlContent, targetTagInfo, styleProperty, styleValue) {
+                if (!targetTagInfo || typeof htmlContent !== 'string') return htmlContent;
+                const openingTag = targetTagInfo.fullOpeningTagMatch;
+                let modifiedOpeningTag = openingTag.slice(0, -1);
+                const styleAttrRegex = /style="([^"]*)"/;
+                const styleMatch = openingTag.match(styleAttrRegex);
+                let newStyleValue = `${escapeHtml(styleProperty)}: ${escapeHtml(styleValue)};`;
+
+                if (styleMatch && styleMatch[1]) {
+                    let existingStyles = styleMatch[1];
+                    if (existingStyles.trim() !== '' && !existingStyles.trim().endsWith(';')) {
+                        existingStyles += '; ';
+                    }
+                    modifiedOpeningTag = modifiedOpeningTag.replace(styleAttrRegex, `style="${existingStyles}${newStyleValue}"`);
+                } else {
+                    modifiedOpeningTag += ` style="${newStyleValue}"`;
+                }
+                modifiedOpeningTag += '>';
+                return htmlContent.substring(0, targetTagInfo.index) + modifiedOpeningTag + htmlContent.substring(targetTagInfo.index + openingTag.length);
+            }
+
+            function addAttributeToElementInString(htmlContent, targetTagInfo, attributeName, attributeValue) {
+                if (!targetTagInfo || typeof htmlContent !== 'string') return htmlContent;
+                const openingTag = targetTagInfo.fullOpeningTagMatch;
+                let modifiedOpeningTag = openingTag.slice(0, -1);
+                const attributeRegex = new RegExp(`${escapeHtml(attributeName)}="[^"]*"`, 'i');
+                const escapedAttributeValue = escapeHtml(attributeValue);
+
+                if (attributeRegex.test(modifiedOpeningTag)) {
+                    modifiedOpeningTag = modifiedOpeningTag.replace(attributeRegex, `${escapeHtml(attributeName)}="${escapedAttributeValue}"`);
+                } else {
+                    modifiedOpeningTag += ` ${escapeHtml(attributeName)}="${escapedAttributeValue}"`;
+                }
+                modifiedOpeningTag += '>';
+                return htmlContent.substring(0, targetTagInfo.index) + modifiedOpeningTag + htmlContent.substring(targetTagInfo.index + openingTag.length);
+            }
+
+            function generateElement(userMessage, defaultTextContext = "Sample Text") {
+                const lowerMessage = userMessage.toLowerCase();
+                let html = '';
+                let responseText = '';
+                let contentText = "";
+                const textMatchSaying = userMessage.match(/saying ['"]([^'"]+)['"]/i) || userMessage.match(/text ['"]([^'"]+)['"]/i) || userMessage.match(/content ['"]([^'"]+)['"]/i);
+                 if (textMatchSaying && textMatchSaying[1]) contentText = textMatchSaying[1];
+
+                let classes = "";
+                const classMatch = lowerMessage.match(/(?:with|and) class(?:es)? ['"]([^'"]+)['"]/i);
+                if (classMatch && classMatch[1]) {
+                    classes = ` class="${escapeHtml(classMatch[1])}"`;
+                }
+
+                if (lowerMessage.includes('heading')) {
+                    let headingText = contentText || defaultTextContext;
+                    let level = 'h2';
+                    if (lowerMessage.match(/h1/)) level = 'h1'; else if (lowerMessage.match(/h3/)) level = 'h3';
+                    else if (lowerMessage.match(/h4/)) level = 'h4'; else if (lowerMessage.match(/h5/)) level = 'h5';
+                    else if (lowerMessage.match(/h6/)) level = 'h6';
+                    html = `<${level}${classes}>${escapeHtml(headingText)}</${level}>`;
+                    responseText = `<strong>Okay, I've prepared a ${level} [heading](ask://ask/What+is+an+HTML+heading).</strong>`;
+                } else if (lowerMessage.includes('paragraph')) {
+                    let paraText = contentText || `This is a sample paragraph for ${defaultTextContext}.`;
+                    html = `<p${classes}>${escapeHtml(paraText)}</p>`;
+                    responseText = `<strong>Okay, I've prepared a [paragraph](ask://ask/What+is+an+HTML+paragraph).</strong>`;
+                } else if (lowerMessage.includes('button')) {
+                    let buttonText = contentText || "Click Action";
+                    html = `<button${classes}>${escapeHtml(buttonText)}</button>`;
+                    responseText = `<strong>Okay, I've prepared a [button](ask://ask/What+is+an+HTML+button).</strong>`;
+                }
+                if (classes && html) responseText += ` with classes '${escapeHtml(classMatch[1])}'.`;
+                return { html, responseText };
+            }
+
+            function processUserRequest(userMessage) {
+                const lowerMessage = userMessage.toLowerCase();
+                let newElementHtml = '';
+                let aiResponseText = '';
+                let commandProcessed = false;
+
+                ensureFileExists(currentOpenFile); // Ensure currentOpenFile is valid before operations
+
+                addMessageToChat("[Thinking] Processing your request...", "ai");
+
+                const createFileMatch = lowerMessage.match(/create file ([\w\/\.-]+)(?: with (.*))?/i);
+                if (createFileMatch) {
+                    const filePath = createFileMatch[1].trim();
+                    const contentDescription = createFileMatch[2] ? createFileMatch[2].trim() : "";
+
+                    virtualFileSystem[filePath] = "";
+                    currentOpenFile = filePath;
+                    aiResponseText = `<strong>Okay, I've created the file [${filePath}](ask://ask/What+is+${encodeURIComponent(filePath)}).</strong>`;
+
+                    if (contentDescription) {
+                        const tempGenerated = generateElement(contentDescription, `Initial content for [${filePath}](ask://ask/Tell+me+more+about+${encodeURIComponent(filePath)})`);
+                        if (tempGenerated.html) {
+                            virtualFileSystem[filePath] = tempGenerated.html;
+                            aiResponseText += ` I've added some initial content.`;
+                            newElementHtml = tempGenerated.html; // To show in chat
+                        } else {
+                             aiResponseText += ` What would you like to put in it?`;
+                        }
+                    } else {
+                        aiResponseText += ` It's currently empty.`;
+                    }
+                    commandProcessed = true;
+                } else {
+                    const styleMatch = lowerMessage.match(/(?:make|style|set) last (heading|paragraph|button) ([\w-]+) (?:to |is |be |)?([\w#\s\."%]+)/i);
+                    if (styleMatch && virtualFileSystem[currentOpenFile] !== undefined) {
+                        const targetType = styleMatch[1];
+                        const stylePropertyInput = styleMatch[2];
+                        let styleValue = styleMatch[3].trim();
+
+                        const validCssProperties = {'color': true, 'background-color': true, 'background': true, 'font-size': true, 'padding': true, 'margin': true, 'border': true, 'width': true, 'height': true, 'text-align':true};
+                        const propertyMap = {'bg': 'background-color', 'bgcolor': 'background-color', 'font': 'font-size', 'align': 'text-align'};
+                        const cssProperty = propertyMap[stylePropertyInput] || stylePropertyInput;
+
+                        if (!validCssProperties[cssProperty] && !cssProperty.startsWith('border-')) {
+                            aiResponseText = `Sorry, I don't know how to apply the style property '${stylePropertyInput}'. Valid properties include color, background-color, font-size, padding, margin, border, width, height, text-align.`;
+                        } else {
+                            if ((cssProperty === 'font-size' || cssProperty === 'padding' || cssProperty === 'margin' || cssProperty === 'width' || cssProperty === 'height') && /^\d+(\.\d+)?$/.test(styleValue) && !styleValue.endsWith("px") && !styleValue.endsWith("em") && !styleValue.endsWith("%") && !styleValue.endsWith("rem")&& !styleValue.endsWith("vw")&& !styleValue.endsWith("vh") ) {
+                                styleValue += 'px';
+                            }
+                            let elementTypeRegexStr = targetType === "heading" ? "h[1-6]" : targetType;
+                            const lastElementMatch = findLastElementOfTypeInString(virtualFileSystem[currentOpenFile], elementTypeRegexStr);
+
+                            if (lastElementMatch) {
+                                virtualFileSystem[currentOpenFile] = applyStyleToElementInString(virtualFileSystem[currentOpenFile], lastElementMatch, cssProperty, styleValue);
+                                aiResponseText = `<strong>Okay, I've styled the last ${targetType} in [${currentOpenFile}](ask://ask/Details+about+${encodeURIComponent(currentOpenFile)}).</strong>`;
+                            } else {
+                                aiResponseText = `I couldn't find a ${targetType} in [${currentOpenFile}](ask://ask/Show+content+of+${encodeURIComponent(currentOpenFile)}) to style. Try creating one first.`;
+                            }
+                        }
+                        commandProcessed = true;
+                    } else {
+                        const jsAlertMatch = lowerMessage.match(/(?:make|set|give) (?:last |the )?button (?:show |an )?alert saying ['"]([^'"]+)['"]/i);
+                        if (jsAlertMatch && virtualFileSystem[currentOpenFile] !== undefined) {
+                            const alertText = jsAlertMatch[1];
+                            const lastButtonMatch = findLastElementOfTypeInString(virtualFileSystem[currentOpenFile], 'button');
+                            if (lastButtonMatch) {
+                                virtualFileSystem[currentOpenFile] = addAttributeToElementInString(virtualFileSystem[currentOpenFile], lastButtonMatch, 'onclick', `alert('${escapeHtml(alertText)}')`);
+                                aiResponseText = `<strong>Okay, I've made the last button in [${currentOpenFile}](ask://ask/Info+on+${encodeURIComponent(currentOpenFile)}) show an alert.</strong> (Note: JS generation is basic).`;
+                            } else {
+                                aiResponseText = `I couldn't find a button in [${currentOpenFile}](ask://ask/Content+of+${encodeURIComponent(currentOpenFile)}) to add an alert to.`;
+                            }
+                            commandProcessed = true;
+                        } else {
+                            const elementGenResult = generateElement(userMessage, `Content for ${currentOpenFile}`);
+                            if (elementGenResult.html) {
+                                newElementHtml = elementGenResult.html;
+                                aiResponseText = elementGenResult.responseText || `<strong>Okay, I've added an element to [${currentOpenFile}](ask://ask/What+is+in+${encodeURIComponent(currentOpenFile)}):</strong>`;
+                                commandProcessed = true;
+                            }
+                        }
+                    }
+                }
+
+                if (!commandProcessed && !aiResponseText) {
+                    aiResponseText = "Sorry, I can currently create files (e.g., 'create file app/page.tsx with a heading Welcome'), add/style elements (headings, paragraphs, buttons) in the current file, or make buttons show alerts. Example: 'make last heading red'";
+                }
+
+                addMessageToChat(aiResponseText, 'ai');
+
+                if (newElementHtml) {
+                    virtualFileSystem[currentOpenFile] = (virtualFileSystem[currentOpenFile] || "") + (virtualFileSystem[currentOpenFile] ? "\n" : "") + newElementHtml;
+                    addMessageToChat(newElementHtml, 'ai', true);
+                }
+
+                renderPagePreview();
+            }
+
+            sendButton.addEventListener('click', handleUserInput);
+            userInputEl.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    handleUserInput();
+                }
+            });
+            renderPagePreview(); // Initial render in case there's a default file with content (though unlikely here)
+        });
+    </script>
+</body>
+</html>
