@@ -5,256 +5,658 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Web Page Element Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="personas.js"></script> <!-- Include the personas script -->
     <style>
         body {
             font-family: 'Roboto', 'Arial', sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex-direction: row;
+            min-height: 100vh;
+            background-color: #121212; /* Dark mode background */
+            color: #e0e0e0; /* Dark mode text */
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            background-color: #f1f3f4;
-            color: #202124;
             box-sizing: border-box;
         }
-        .container {
+
+        .main-content-area {
+            display: flex;
             width: 100%;
-            max-width: 900px;
-            background-color: #ffffff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-            border-radius: 8px;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            width: 50%;
             display: flex;
             flex-direction: column;
+            background-color: #1e1e1e;
+            border-right: 1px solid #333;
+            height: 100%;
             overflow: hidden;
-            margin-top: 20px;
-            margin-bottom: 20px;
         }
-        h1 {
-            text-align: left;
-            color: #1a73e8;
-            padding: 16px 24px;
+
+        .right-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background-color: #242424;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid #333;
+            background-color: #1e1e1e;
+        }
+
+        .app-header h1 {
+            color: #bb86fc;
             margin: 0;
             font-family: 'Google Sans', 'Roboto', sans-serif;
-            font-weight: 400;
-            font-size: 1.375rem;
-            border-bottom: 1px solid #dadce0;
+            font-weight: 500;
+            font-size: 1.25rem;
         }
+
+        .persona-selector-container select {
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        .persona-selector-container select:focus {
+            outline: none;
+            border-color: #bb86fc;
+            box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.3);
+        }
+
+        #chatAndCodeContainer {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            overflow: hidden;
+            padding: 16px;
+        }
+
         #chatInterface {
-            padding: 16px 24px;
-            border-bottom: 1px solid #dadce0;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            min-height: 0;
+            height: 60%; /* Proportion of left panel */
         }
+
         #chatMessages {
-            height: 400px;
+            flex-grow: 1;
             overflow-y: auto;
-            border: 1px solid #dadce0;
+            border: 1px solid #333;
             padding: 16px;
             margin-bottom: 16px;
-            background-color: #ffffff;
+            background-color: #2c2c2c;
             border-radius: 4px;
+            color: #e0e0e0;
         }
+
         .message {
             margin-bottom: 12px;
             padding: 10px 14px;
             border-radius: 20px;
             line-height: 1.5;
-            max-width: 80%;
+            max-width: 90%; /* Slightly wider for AI messages */
             word-wrap: break-word;
             font-size: 0.9rem;
         }
         .user-message {
-            background-color: #1a73e8;
+            background-color: #0360df;
             color: white;
             margin-left: auto;
             border-bottom-right-radius: 6px;
         }
         .ai-message {
-            background-color: #f1f3f4;
-            color: #202124;
+            background-color: #373737;
+            color: #e0e0e0;
             margin-right: auto;
             border-bottom-left-radius: 6px;
         }
-        .ai-message pre {
+        .system-message {
+            font-size: 0.8rem;
+            font-style: italic;
+            color: #9e9e9e;
+            text-align: center;
+            margin: 8px 0;
+            padding: 4px;
+            background-color: transparent;
+            max-width: 100%;
+        }
+
+        .ai-message pre, .code-block-wrapper pre {
             white-space: pre-wrap;
             word-wrap: break-word;
-            background-color: #e8eaed;
-            padding: 10px;
+            background-color: #1a1a1a;
+            color: #d4d4d4;
+            padding: 12px;
             border-radius: 4px;
             margin-top: 8px;
             font-family: 'Roboto Mono', 'Courier New', monospace;
-            font-size: 0.85em;
-            border: 1px solid #dadce0;
+            font-size: 0.875em;
+            border: 1px solid #444;
             overflow-x: auto;
         }
+        .thinking-block {
+            padding: 8px 12px;
+            background-color: rgba(187, 134, 252, 0.1);
+            border-left: 3px solid #bb86fc;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-style: italic;
+            color: #bdbdbd;
+            font-size: 0.85rem;
+        }
+        .quick-edit-block {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border: 1px solid #f59e0b;
+            border-left-width: 3px;
+            background-color: rgba(245, 158, 11, 0.1);
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .quick-edit-block .font-semibold { color: #fcd34d; }
+
+        .delete-file-block {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border: 1px solid #ef4444;
+            border-left-width: 3px;
+            background-color: rgba(239, 68, 68, 0.1);
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .delete-file-block .font-semibold { color: #fca5a5; }
+
+
+        .thinking-message {
+             font-style: italic;
+             color: #aaa;
+             font-size: 0.85rem;
+        }
+        .code-block-wrapper {
+            margin: 8px 0;
+        }
+        .code-block-header {
+            background-color: #424242;
+            color: #e0e0e0;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            font-family: 'Roboto Mono', monospace;
+        }
+
         #userInputArea {
             display: flex;
-            margin-top: auto;
+            padding: 10px 0;
         }
         #userInput {
             flex-grow: 1;
-            padding: 10px 16px;
-            border: 1px solid #dadce0;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            padding: 12px 18px;
+            border: 1px solid #444;
+            border-radius: 25px;
+            font-size: 0.95rem;
             line-height: 1.5;
+            background-color: #2c2c2c;
+            color: #e0e0e0;
         }
         #userInput:focus {
             outline: none;
-            border-color: #1a73e8;
-            box-shadow: 0 0 0 2px rgba(26,115,232,.2);
+            border-color: #bb86fc;
+            box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.3);
         }
         #sendButton {
-            padding: 10px 20px;
-            margin-left: 8px;
+            padding: 12px 24px;
+            margin-left: 10px;
             border: none;
-            background-color: #1a73e8;
-            color: white;
-            border-radius: 20px;
+            background-color: #03dac6;
+            color: #121212;
+            border-radius: 25px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: 500;
             transition: background-color 0.2s ease;
         }
         #sendButton:hover {
-            background-color: #1765cc;
+            background-color: #01bea5;
         }
-        #htmlOutputContainer {
-            padding: 16px 24px;
-            background-color: #f8f9fa;
-             border-top: 1px solid #dadce0;
+
+        #codePreviewContainer {
+            background-color: #1e1e1e;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 40%;
+            margin-top: 16px;
+            border-radius: 4px;
+            border: 1px solid #333;
         }
-        #htmlOutputContainer h2 {
-            margin-top: 0;
-            margin-bottom: 12px;
-            color: #3c4043;
+        #codePreviewContainer h2 {
+            margin: 0;
+            padding: 10px 16px;
+            color: #bb86fc;
             font-size: 1.1rem;
             font-weight: 500;
-        }
-        #htmlOutput {
-            border: 1px solid #dadce0;
-            padding: 16px;
-            min-height: 150px;
-            background-color: #ffffff;
-            border-radius: 4px;
-            margin-bottom: 16px;
+            background-color: #2c2c2c;
+            border-bottom: 1px solid #333;
         }
         #htmlCodeOutput {
             width: 100%;
+            flex-grow: 1;
             box-sizing: border-box;
-            min-height: 150px;
-            margin-top: 8px;
             font-family: 'Roboto Mono', 'Courier New', monospace;
-            border: 1px solid #dadce0;
-            padding: 10px;
-            background-color: #f8f9fa;
+            border: none;
+            padding: 16px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-size: 0.9em;
+            line-height: 1.6;
+            resize: none;
+            overflow-y: auto;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+        #htmlCodeOutput:focus { outline: none; }
+
+        #fileTabsContainer {
+            display: flex;
+            flex-wrap: wrap;
+            background-color: #2c2c2c;
+            padding: 4px 4px 0 4px;
+            border-bottom: 1px solid #333;
+        }
+        .file-tab {
+            background-color: #424242;
+            color: #bdbdbd;
+            padding: 8px 12px;
+            margin-right: 4px;
+            margin-bottom: -1px;
+            border: 1px solid #333;
+            border-bottom: none;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .file-tab:hover {
+            background-color: #555;
+            color: #fff;
+        }
+        .file-tab.active {
+            background-color: #1e1e1e;
+            color: #bb86fc;
+            border-bottom: 1px solid #1e1e1e;
+            font-weight: 500;
+        }
+
+        #webPreviewContainer {
+            padding: 16px;
+            background-color: #242424;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #webPreviewContainer h2 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            padding: 10px 16px;
+            color: #bb86fc;
+            font-size: 1.1rem;
+            font-weight: 500;
+            background-color: #2c2c2c;
+            border-bottom: 1px solid #333;
+            border-radius: 4px;
+        }
+        #htmlOutput {
+            border: 1px solid #333;
+            padding: 16px;
+            flex-grow: 1;
+            background-color: #ffffff;
             color: #202124;
             border-radius: 4px;
-            font-size: 0.85em;
-            line-height: 1.6;
+            overflow-y: auto;
         }
-        #chatMessages::-webkit-scrollbar { width: 8px; }
-        #chatMessages::-webkit-scrollbar-track { background: #f1f3f4; border-radius: 4px; }
-        #chatMessages::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 4px; }
-        #chatMessages::-webkit-scrollbar-thumb:hover { background: #bdc1c6; }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: #2c2c2c; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #777; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>AI Web Page Element Generator</h1>
-        <div id="chatInterface">
-            <div id="chatMessages"></div>
-            <div id="userInputArea">
-                <input type="text" id="userInput" placeholder="e.g., create file app/page.tsx with a heading 'Welcome'">
-                <button id="sendButton">Send</button>
+<body class="bg-gray-900 text-gray-100">
+    <div class="main-content-area flex w-full h-screen overflow-hidden">
+        <div class="left-panel w-1/2 flex flex-col border-r border-gray-700 bg-gray-850">
+            <div class="app-header">
+                <h1>AI Web Page Element Generator</h1>
+                <div class="persona-selector-container">
+                    <select id="personaSelector">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+            </div>
+
+            <div id="chatAndCodeContainer" class="flex flex-col flex-grow overflow-hidden p-4">
+                <div id="chatInterface" class="flex flex-col flex-grow min-h-0 h-3/5">
+                    <div id="chatMessages" class="flex-grow overflow-y-auto border border-gray-700 p-4 mb-4 bg-gray-750 rounded-md text-gray-200">
+                        <!-- Messages will be appended here -->
+                    </div>
+                    <div id="userInputArea" class="flex py-2">
+                        <input type="text" id="userInput" class="flex-grow p-3 border border-gray-600 rounded-full text-base bg-gray-700 text-gray-200 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-600" placeholder="Loading...">
+                        <button id="sendButton" class="p-3 px-6 ml-2.5 border-none bg-teal-400 text-gray-900 rounded-full cursor-pointer text-base font-medium transition-colors hover:bg-teal-300">Send</button>
+                    </div>
+                </div>
+
+                <div id="codePreviewContainer">
+                    <h2>Generated Code:</h2>
+                    <div id="fileTabsContainer" class="flex flex-wrap border-b border-gray-700 bg-gray-750">
+                        <!-- File tabs will be dynamically added here -->
+                    </div>
+                    <textarea id="htmlCodeOutput" readonly placeholder="// Code generated by AI will appear here..."></textarea>
+                </div>
             </div>
         </div>
-        <div id="htmlOutputContainer">
-            <h2>Rendered Output:</h2>
-            <div id="htmlOutput"><p><i>No content generated yet.</i></p></div>
-            <h2>Generated HTML Code:</h2>
-            <textarea id="htmlCodeOutput" readonly placeholder="// No file selected or created..."></textarea>
+
+        <div class="right-panel w-1/2 flex flex-col">
+            <div id="webPreviewContainer" class="p-4 bg-gray-850 flex-grow flex flex-col overflow-hidden">
+                <h2>Rendered Output:</h2>
+                <div id="htmlOutput" class="border border-gray-700 p-4 flex-grow bg-white text-gray-900 rounded-md overflow-y-auto">
+                    <p class="italic">No content generated yet.</p>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        /**
+         * AI Web Page Element Generator Script
+         * Handles UI interactions, persona management, AI response simulation,
+         * virtual file system, and rendering previews.
+         */
         document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Element References ---
             const userInputEl = document.getElementById('userInput');
             const sendButton = document.getElementById('sendButton');
             const chatMessagesEl = document.getElementById('chatMessages');
             const htmlOutputEl = document.getElementById('htmlOutput');
             const htmlCodeOutputEl = document.getElementById('htmlCodeOutput');
+            const personaSelectorEl = document.getElementById('personaSelector');
+            const fileTabsContainerEl = document.getElementById('fileTabsContainer');
 
+            // --- Application State ---
             let virtualFileSystem = {};
-            let currentOpenFile = "app/page.tsx"; // Default file
-            ensureFileExists(currentOpenFile); // Ensure default file exists initially
+            let currentOpenFile = "app/page.tsx";
+            let currentPersonaId = "v0";
+            let currentV0ProjectId = `v0project-${Date.now()}`;
+            let currentProjectFiles = [];
 
+            // --- Persona Management & Initialization ---
+            /** Populates the persona selector dropdown and sets up event listeners. */
+            function initializePersonaSystem() {
+                if (typeof getAllPersonasForSelect === 'function') {
+                    const personasForSelect = getAllPersonasForSelect();
+                    personasForSelect.forEach(persona => {
+                        const option = document.createElement('option');
+                        option.value = persona.id;
+                        option.textContent = persona.displayName;
+                        personaSelectorEl.appendChild(option);
+                    });
+                    personaSelectorEl.value = currentPersonaId;
+                } else {
+                    console.error("Personas could not be loaded. Ensure personas.js is included and correct.");
+                    addMessageToChat("Error: AI Personas could not be loaded.", 'system');
+                }
+
+                personaSelectorEl.addEventListener('change', (event) => {
+                    currentPersonaId = event.target.value;
+                    const selectedPersona = getPersonaById(currentPersonaId);
+                    addMessageToChat(`Switched to ${selectedPersona ? selectedPersona.displayName : 'Unknown'} persona.`, 'system');
+                    updateUserInputPlaceholder();
+                    displayInitialWelcomeMessage();
+                    if (currentPersonaId !== 'v0') {
+                        currentV0ProjectId = null;
+                        updateFileTabs([]);
+                    } else if (!currentV0ProjectId) {
+                        currentV0ProjectId = `v0project-${Date.now()}`;
+                    }
+                });
+            }
+
+            /** Updates the input field's placeholder text based on the current AI persona. */
+            function updateUserInputPlaceholder() {
+                const persona = getPersonaById(currentPersonaId);
+                if (persona) {
+                    switch(persona.id) {
+                        case 'v0':
+                            userInputEl.placeholder = "v0: Try 'create a Next.js component MyButton with a primary variant' or 'add a heading to app/page.tsx'";
+                            break;
+                        case 'julesAI':
+                            userInputEl.placeholder = "Jules: e.g., 'plan feature for user authentication' or 'create script.js with a debounce function'";
+                            break;
+                        case 'claudeSonnet':
+                            userInputEl.placeholder = "Claude: e.g., 'summarize this article...' or 'explain quantum computing simply'";
+                            break;
+                        case 'chatGPT4':
+                            userInputEl.placeholder = "ChatGPT4: e.g., 'write a python script to parse csv' or 'draft an email to a client'";
+                            break;
+                        case 'geminiPro':
+                            userInputEl.placeholder = "Gemini: e.g., 'help me brainstorm ideas for a new app' or 'what are the pros and cons of X?'";
+                            break;
+                        default:
+                            userInputEl.placeholder = `Ask ${persona.displayName}...`;
+                    }
+                } else {
+                    userInputEl.placeholder = "Enter your request...";
+                }
+            }
+
+            /** Clears chat and displays a persona-specific welcome message. */
+            function displayInitialWelcomeMessage() {
+                chatMessagesEl.innerHTML = '';
+                const persona = getPersonaById(currentPersonaId);
+                let welcome = `Hello! I'm ${persona ? persona.displayName : 'your AI Assistant'}. How can I help?`;
+                if (persona) {
+                    if (persona.id === 'v0') welcome = "v0 ready. Describe the UI you want to build using Next.js, Tailwind, and shadcn/ui.";
+                    else if (persona.id === 'julesAI') welcome = "Jules here. Task received. Analyzing requirements...";
+                }
+                addMessageToChat(welcome, "ai");
+            }
+
+            initializePersonaSystem();
+            ensureFileExists(currentOpenFile);
+            updateUserInputPlaceholder();
+            displayInitialWelcomeMessage();
+
+            // --- File Tab Management for v0 CodeProjects ---
+            /**
+             * Dynamically creates and manages file tabs for v0's CodeProject outputs.
+             * @param {Array<{path: string, content: string}>} projectFiles - Array of file objects.
+             */
+            function updateFileTabs(projectFiles) {
+                fileTabsContainerEl.innerHTML = '';
+                currentProjectFiles = projectFiles || [];
+
+                if (currentProjectFiles.length > 0) {
+                    fileTabsContainerEl.style.display = 'flex';
+                    currentProjectFiles.forEach((file) => {
+                        const tabEl = document.createElement('div');
+                        tabEl.classList.add('file-tab');
+                        tabEl.textContent = file.path.split('/').pop();
+                        tabEl.dataset.filePath = file.path;
+
+                        if (file.path === currentOpenFile) {
+                            tabEl.classList.add('active');
+                        }
+
+                        tabEl.addEventListener('click', () => {
+                            currentOpenFile = file.path;
+                            renderPagePreview();
+                            document.querySelectorAll('#fileTabsContainer .file-tab').forEach(t => t.classList.remove('active'));
+                            tabEl.classList.add('active');
+                        });
+                        fileTabsContainerEl.appendChild(tabEl);
+                    });
+                } else {
+                    fileTabsContainerEl.style.display = 'none';
+                }
+            }
+
+            // --- Utility Functions ---
+            /**
+             * Escapes HTML special characters in a string to prevent XSS vulnerabilities.
+             * @param {string} unsafe - The string to escape.
+             * @returns {string} The escaped string.
+             */
             function escapeHtml(unsafe) {
                 if (typeof unsafe !== 'string') return '';
                 return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
             }
+             /**
+             * Escapes special characters in a string for use in a regular expression.
+             * @param {string} string - The string to escape.
+             * @returns {string} The escaped string.
+             */
+            function escapeRegExp(string) {
+              return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
 
-            function formatDiaResponse(message) {
-                if (typeof message !== 'string') return '';
+            /**
+             * Formats the AI's response message for display in the chat.
+             * Handles MDX for v0 (simulated) and basic Markdown for other personas.
+             * @param {string} message - The raw message content from the AI.
+             * @param {string} personaId - The ID of the current AI persona.
+             * @returns {string} HTML formatted string for the chat message.
+             */
+            function formatAiResponse(message, personaId) {
                 let formattedText = message;
-                // Simple Answer simulation
-                if (formattedText.startsWith('<strong>')) {
-                    const strongEnd = formattedText.indexOf('</strong>');
-                    if (strongEnd !== -1) {
-                        const strongPart = formattedText.substring(0, strongEnd + 9); // Include </strong>
-                        const restPart = escapeHtml(formattedText.substring(strongEnd + 9));
-                        formattedText = strongPart + restPart; // Strong part is already HTML, rest is escaped
-                    } else {
-                        formattedText = escapeHtml(formattedText); // Escape if <strong> is unclosed
-                    }
-                } else {
-                    formattedText = escapeHtml(formattedText);
-                }
+                const persona = getPersonaById(personaId);
 
-                // Ask Dia Hyperlink simulation (on the escaped text)
-                const keywords = ['file', 'heading', 'paragraph', 'button', 'style', 'alert', 'class', 'CSS', 'HTML', 'JavaScript', currentOpenFile];
-                keywords.filter(Boolean).forEach(keyword => {
-                    const escapedKeyword = escapeHtml(keyword);
-                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
-                    formattedText = formattedText.replace(regex, `<a href="#" data-ask-query="Tell me more about ${escapedKeyword}" style="color: #1a73e8; text-decoration: underline;">$1</a>`);
-                });
+                if (persona && persona.responseFormat === 'mdx') {
+                    formattedText = escapeHtml(message);
+
+                    formattedText = formattedText.replace(/&lt;Thinking&gt;([\s\S]*?)&lt;\/Thinking&gt;/gi,
+                        (match, thinkingContent) => `<div class="thinking-block">${thinkingContent}</div>`);
+
+                    formattedText = formattedText.replace(/&lt;CodeProject id="([^"]+)"&gt;([\s\S]*?)&lt;\/CodeProject&gt;/gi,
+                        (match, projectId, projectContent) => {
+                            let processedProjectContent = projectContent.replace(/```(\w*)\s*file="([^"]+)"\n([\s\S]*?)\n```/g,
+                                (fileMatch, lang, filePath, code) =>
+                                `<div class="code-block-wrapper my-2"><div class="code-block-header">${escapeHtml(filePath)}${lang ? ` (${escapeHtml(lang)})` : ''}</div><pre>${escapeHtml(code)}</pre></div>`
+                            );
+                            return `<div class="code-project p-2 border border-gray-600 rounded my-2"><em class="text-sm text-gray-400 block mb-1">CodeProject ID: ${escapeHtml(projectId)}</em>${processedProjectContent}</div>`;
+                        });
+
+                    formattedText = formattedText.replace(/&lt;QuickEdit file="([^"]+)"&gt;([\s\S]*?)&lt;\/QuickEdit&gt;/gi,
+                        (match, filePath, instruction) =>
+                        `<div class="quick-edit-block"><div class="font-semibold text-yellow-300">Quick Edit: ${escapeHtml(filePath)}</div><div>${instruction}</div></div>`);
+
+                    formattedText = formattedText.replace(/&lt;DeleteFile file="([^"]+)"\s*\/?&gt;/gi,
+                        (match, filePath) =>
+                        `<div class="delete-file-block"><div class="font-semibold text-red-300">File Deletion: ${escapeHtml(filePath)}</div><div>Instruction to delete this file was processed.</div></div>`);
+
+                    formattedText = formattedText.replace(/(?<!file="[^"]+")```(\w*)\n([\s\S]*?)\n```/g,
+                        (match, lang, codeContent) => {
+                             const langDisplay = lang ? ` (${escapeHtml(lang)})` : '';
+                            return `<pre class="bg-gray-900 p-2 my-2 rounded-md text-sm">${escapeHtml(codeContent)}${langDisplay}</pre>`;
+                        });
+                } else {
+                    formattedText = escapeHtml(message);
+                    formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                    formattedText = formattedText.replace(/`([^`]+)`/g, '<code class="inline-code bg-gray-700 px-1 rounded">$1</code>');
+                    formattedText = formattedText.replace(/^(#{1,3}) (.*?)$/gm, (match, hashes, headingText) => {
+                        const level = hashes.length;
+                        return `<h${level} class="text-lg my-1 font-semibold">${headingText}</h${level}>`;
+                    });
+                    formattedText = formattedText.replace(/^\* (.*?)$/gm, '<li>$1</li>');
+                    if (formattedText.includes('<li>')) {
+                        formattedText = formattedText.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>').replace(/<\/ul>\s*<ul>/gs, '');
+                    }
+                    formattedText = formattedText.replace(/```(python|javascript|js|html|css)\n([\s\S]*?)\n```/gi,
+                        (match, lang, codeContent) =>
+                        `<pre class="bg-gray-900 p-2 my-2 rounded-md text-sm">(${escapeHtml(lang)})<br>${escapeHtml(codeContent)}</pre>`);
+
+                    formattedText = formattedText.replace(/\n/g, '<br>');
+                }
                 return formattedText;
             }
 
-            function addMessageToChat(message, sender, isCode = false) {
+            /**
+             * Adds a message to the chat interface.
+             * @param {string} message - The message content.
+             * @param {string} sender - 'user', 'ai', or 'system'.
+             * @param {boolean} [isCodeBlock=false] - True if the AI message is a distinct raw code block.
+             * @param {boolean} [isThinkingFlag=false] - True if the AI message is a generic "thinking..." update.
+             */
+            function addMessageToChat(message, sender, isCodeBlock = false, isThinkingFlag = false) {
                 const messageEl = document.createElement('div');
                 messageEl.classList.add('message', sender + '-message');
 
-                if (sender === 'ai' && isCode) {
-                    const pre = document.createElement('pre');
-                    pre.textContent = message;
-                    messageEl.appendChild(pre);
+                if (sender === 'system') {
+                    messageEl.classList.add('system-message');
+                    messageEl.textContent = message;
                 } else if (sender === 'ai') {
-                    messageEl.innerHTML = formatDiaResponse(message);
-                } else {
+                    const persona = getPersonaById(currentPersonaId);
+                    if (isThinkingFlag && !(persona && persona.thinkingStyle === 'v0_thinking_block')) {
+                        messageEl.innerHTML = `<em class="thinking-message">${escapeHtml(message)}</em>`;
+                    } else if (isCodeBlock) {
+                        const pre = document.createElement('pre');
+                        pre.textContent = message;
+                        messageEl.appendChild(pre);
+                    } else {
+                        let finalMessageContent = message;
+                        if (persona && !message.trim().startsWith('<Thinking>') && !message.trim().startsWith('<CodeProject') && !message.trim().startsWith('<QuickEdit') && !message.trim().startsWith('<DeleteFile')) {
+                           const personaPrefixPattern = new RegExp(`^(<strong>${escapeHtml(persona.displayName)}:</strong><br>|As ${escapeHtml(persona.displayName)}:|${escapeHtml(persona.displayName)}:)`, "i");
+                           if (!personaPrefixPattern.test(message.trim())) {
+                                finalMessageContent = `<strong>${escapeHtml(persona.displayName)}:</strong><br>` + message;
+                           }
+                        }
+                        messageEl.innerHTML = formatAiResponse(finalMessageContent, currentPersonaId);
+                    }
+                } else { // User message
                     messageEl.textContent = escapeHtml(message);
                 }
                 chatMessagesEl.appendChild(messageEl);
                 chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
             }
 
-            addMessageToChat("Hello! I'm Dia. How can I help you build something today? (e.g., 'create file app/page.tsx with a heading Welcome')", "ai");
-
+            /** Updates the rendered HTML preview and the code display area. */
             function renderPagePreview() {
-                const path = currentOpenFile || defaultFilePath;
-                const content = virtualFileSystem[path] || "";
-                htmlOutputEl.innerHTML = content;
-                htmlCodeOutputEl.value = `// --- File: ${path} ---\n\n${content}`;
+                const path = currentOpenFile;
+                const content = virtualFileSystem[path] || `// No content for ${path}, or file not found.`;
+
+                if (path && (path.endsWith('.html') || path.endsWith('.htm'))) {
+                    htmlOutputEl.innerHTML = content;
+                } else {
+                    htmlOutputEl.innerHTML = `<div class="p-4 text-gray-500 text-sm"><em>Live preview is primarily for HTML files. Currently viewing: '${escapeHtml(path)}'. Check 'Generated Code' for its content.</em></div>`;
+                }
+                htmlCodeOutputEl.value = `// --- File: ${escapeHtml(path)} ---\n\n${content}`;
             }
 
+            /** Ensures a file path exists in the virtual file system. */
             function ensureFileExists(filePath) {
                 if (filePath && !virtualFileSystem.hasOwnProperty(filePath)) {
                     virtualFileSystem[filePath] = "";
                 }
             }
 
+            /** Handles user input submission from the chat. */
             function handleUserInput() {
                 const messageText = userInputEl.value.trim();
                 if (messageText === '') return;
@@ -263,199 +665,416 @@
                 processUserRequest(messageText);
             }
 
-            function findLastElementOfTypeInString(htmlContent, elementTypeRegexStr) {
-                if(typeof htmlContent !== 'string') return null;
-                const regex = new RegExp(`<(${elementTypeRegexStr})(\\s|>)`, 'gi');
-                let lastMatch = null;
-                let match;
-                while ((match = regex.exec(htmlContent)) !== null) {
-                    const openingTagEnd = htmlContent.indexOf('>', match.index);
-                    if (openingTagEnd === -1) continue;
-                    lastMatch = {
-                        index: match.index,
-                        tag: match[1],
-                        fullOpeningTagMatch: htmlContent.substring(match.index, openingTagEnd + 1)
-                    };
-                }
-                return lastMatch;
-            }
-
-            function applyStyleToElementInString(htmlContent, targetTagInfo, styleProperty, styleValue) {
-                if (!targetTagInfo || typeof htmlContent !== 'string') return htmlContent;
-                const openingTag = targetTagInfo.fullOpeningTagMatch;
-                let modifiedOpeningTag = openingTag.slice(0, -1);
-                const styleAttrRegex = /style="([^"]*)"/;
-                const styleMatch = openingTag.match(styleAttrRegex);
-                let newStyleValue = `${escapeHtml(styleProperty)}: ${escapeHtml(styleValue)};`;
-
-                if (styleMatch && styleMatch[1]) {
-                    let existingStyles = styleMatch[1];
-                    if (existingStyles.trim() !== '' && !existingStyles.trim().endsWith(';')) {
-                        existingStyles += '; ';
-                    }
-                    modifiedOpeningTag = modifiedOpeningTag.replace(styleAttrRegex, `style="${existingStyles}${newStyleValue}"`);
-                } else {
-                    modifiedOpeningTag += ` style="${newStyleValue}"`;
-                }
-                modifiedOpeningTag += '>';
-                return htmlContent.substring(0, targetTagInfo.index) + modifiedOpeningTag + htmlContent.substring(targetTagInfo.index + openingTag.length);
-            }
-
-            function addAttributeToElementInString(htmlContent, targetTagInfo, attributeName, attributeValue) {
-                if (!targetTagInfo || typeof htmlContent !== 'string') return htmlContent;
-                const openingTag = targetTagInfo.fullOpeningTagMatch;
-                let modifiedOpeningTag = openingTag.slice(0, -1);
-                const attributeRegex = new RegExp(`${escapeHtml(attributeName)}="[^"]*"`, 'i');
-                const escapedAttributeValue = escapeHtml(attributeValue);
-
-                if (attributeRegex.test(modifiedOpeningTag)) {
-                    modifiedOpeningTag = modifiedOpeningTag.replace(attributeRegex, `${escapeHtml(attributeName)}="${escapedAttributeValue}"`);
-                } else {
-                    modifiedOpeningTag += ` ${escapeHtml(attributeName)}="${escapedAttributeValue}"`;
-                }
-                modifiedOpeningTag += '>';
-                return htmlContent.substring(0, targetTagInfo.index) + modifiedOpeningTag + htmlContent.substring(targetTagInfo.index + openingTag.length);
-            }
-
-            function generateElement(userMessage, defaultTextContext = "Sample Text") {
+            // --- Core AI Simulation Logic ---
+            /**
+             * Simulates AI response based on user message and current persona.
+             * @param {string} userMessage - User's input.
+             * @param {string} personaId - Active persona ID.
+             * @returns {{ thinking: string, response: string, code?: string, projectFiles?: Array<{path: string, content: string}> }}
+             */
+            function getSimulatedAiResponse(userMessage, personaId) {
+                const persona = getPersonaById(personaId);
                 const lowerMessage = userMessage.toLowerCase();
-                let html = '';
-                let responseText = '';
-                let contentText = "";
-                const textMatchSaying = userMessage.match(/saying ['"]([^'"]+)['"]/i) || userMessage.match(/text ['"]([^'"]+)['"]/i) || userMessage.match(/content ['"]([^'"]+)['"]/i);
-                 if (textMatchSaying && textMatchSaying[1]) contentText = textMatchSaying[1];
+                let thinking = "";
+                let response = "";
+                let code = "";
+                let projectFilesOutput = [];
 
-                let classes = "";
-                const classMatch = lowerMessage.match(/(?:with|and) class(?:es)? ['"]([^'"]+)['"]/i);
-                if (classMatch && classMatch[1]) {
-                    classes = ` class="${escapeHtml(classMatch[1])}"`;
+                if (persona.thinkingStyle !== 'v0_thinking_block' && persona.thinkingStyle !== 'jules_planning_steps') {
+                    thinking = `[${persona.displayName} is processing: "${userMessage.substring(0,40)}..."]`;
                 }
 
-                if (lowerMessage.includes('heading')) {
-                    let headingText = contentText || defaultTextContext;
-                    let level = 'h2';
-                    if (lowerMessage.match(/h1/)) level = 'h1'; else if (lowerMessage.match(/h3/)) level = 'h3';
-                    else if (lowerMessage.match(/h4/)) level = 'h4'; else if (lowerMessage.match(/h5/)) level = 'h5';
-                    else if (lowerMessage.match(/h6/)) level = 'h6';
-                    html = `<${level}${classes}>${escapeHtml(headingText)}</${level}>`;
-                    responseText = `<strong>Okay, I've prepared a ${level} [heading](ask://ask/What+is+an+HTML+heading).</strong>`;
-                } else if (lowerMessage.includes('paragraph')) {
-                    let paraText = contentText || `This is a sample paragraph for ${defaultTextContext}.`;
-                    html = `<p${classes}>${escapeHtml(paraText)}</p>`;
-                    responseText = `<strong>Okay, I've prepared a [paragraph](ask://ask/What+is+an+HTML+paragraph).</strong>`;
-                } else if (lowerMessage.includes('button')) {
-                    let buttonText = contentText || "Click Action";
-                    html = `<button${classes}>${escapeHtml(buttonText)}</button>`;
-                    responseText = `<strong>Okay, I've prepared a [button](ask://ask/What+is+an+HTML+button).</strong>`;
+                // --- V0 Persona Logic ---
+                if (persona.id === 'v0') {
+                    currentV0ProjectId = currentV0ProjectId || `v0project-${Date.now()}`;
+                    response = `<Thinking>Received request: "${escapeHtml(userMessage)}". Analyzing for Next.js/React generation.</Thinking>\n`;
+
+                    const createFileMatch = lowerMessage.match(/(?:create|make|generate) file ([\w\/\.-]+\.(?:tsx|ts|js|jsx|html|css))(?: (?:with|containing|that has) (.*))?/i);
+                    const createComponentMatch = lowerMessage.match(/(?:create|make|generate) (?:a )?(react |next\.js |next |v0 )?component named (\w+)(?: (?:with|that has|saying|displaying|props) (.*))?/i);
+                    const addElementMatch = lowerMessage.match(/(?:add|insert|put) (?:an? )?(heading|paragraph|button|div|image|icon|card|input|alert|avatar|dialog|select|checkbox)(?: (?:saying|with text|called|named|src|icon name|title|placeholder|label|options) ['"]([^'"]+)['"]| (?:with class|classes) ['"]([^'"]+)['"])?(?: (?:to|in|inside) [`']?([\w\/\.-]+)[`']?)?/i);
+                    const styleRequestMatch = lowerMessage.match(/(?:make|style|set) (?:last |the )?(heading|paragraph|button|card|div|input|alert|avatar|image|icon) ([\w-]+(?:-\d{1,3})?(?: \w+-\d{1,3})*) (?:to |is |be |)?['"]?([^'"\n]+)['"]?/i);
+                    const quickEditMatch = lowerMessage.match(/(?:edit|modify|update|change) file [`']?([\w\/\.-]+)[`']?(?: to| and)? change (?:['"]([^'"]+)['"] to ['"]([^'"]+)['"]|(.*))/i);
+                    const deleteFileMatch = lowerMessage.match(/(?:delete|remove) file [`']?([\w\/\.-]+)[`']?/i);
+
+
+                    if (createFileMatch) {
+                        const filePath = createFileMatch[1].trim();
+                        const contentDescription = createFileMatch[2] ? createFileMatch[2].trim() : "";
+                        let fileContent = `// File: ${filePath}\n// Created by v0\n`;
+                        let fileSpecificImports = new Set(["import React from 'react';"]);
+                        let jsxElements = [];
+                        let componentName = "MyPage";
+
+                        if (filePath.endsWith('.tsx')) {
+                            if (filePath.startsWith('components/')) {
+                                const nameFromPath = filePath.split('/').pop().replace(/\.tsx$/, '');
+                                componentName = nameFromPath.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+                            } else {
+                                componentName = (filePath.split('/').pop().replace(/\.tsx$/, '').replace(/^page$/, '') || 'Generated') + 'Page';
+                                componentName = componentName.charAt(0).toUpperCase() + componentName.slice(1);
+                            }
+
+                            if (contentDescription) {
+                                fileContent += `// Content based on: ${contentDescription}\n`;
+                                if (contentDescription.includes("button")) {
+                                    fileSpecificImports.add(`import { Button } from '@/components/ui/button';`);
+                                    jsxElements.push(`<Button>${escapeHtml(contentDescription.match(/button saying ['"]([^'"]+)['"]/i)?.[1] || 'Click')}</Button>`);
+                                }
+                                if (contentDescription.match(/icon named ['"]([^'"]+)['"]/i)) {
+                                    const iconNameRaw = contentDescription.match(/icon named ['"]([^'"]+)['"]/i)[1];
+                                    const iconNamePascal = iconNameRaw.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+                                    fileSpecificImports.add(`import { ${iconNamePascal} } from 'lucide-react';`);
+                                    jsxElements.push(`<${iconNamePascal} className="h-5 w-5" />`);
+                                }
+                                 if (contentDescription.includes("input")) {
+                                    fileSpecificImports.add(`import { Input } from '@/components/ui/input';`);
+                                    jsxElements.push(`<Input placeholder="Enter text..." />`);
+                                }
+                                if (contentDescription.includes("card")) {
+                                    fileSpecificImports.add(`import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';`);
+                                    jsxElements.push(`<Card><CardHeader><CardTitle>Sample Card</CardTitle></CardHeader><CardContent><p>Card content</p></CardContent></Card>`);
+                                }
+                                if (jsxElements.length === 0) jsxElements.push(`<p>${escapeHtml(contentDescription)}</p>`);
+
+                            } else {
+                                jsxElements.push(`<h1 className="text-2xl font-semibold">Welcome to ${componentName}</h1>`);
+                                jsxElements.push(`<p>This is the ${componentName} ${filePath.startsWith('components/') ? 'component' : 'page'}.</p>`);
+                            }
+
+                            fileContent = Array.from(fileSpecificImports).join('\n') + '\n\n';
+                            fileContent += `export default function ${componentName}() {\n  return (\n    <div className="p-4 space-y-4">\n      ${jsxElements.join('\n      ')}\n    </div>\n  );\n}\n`;
+
+                        } else {
+                            fileContent += contentDescription || `// Basic content for ${filePath}`;
+                        }
+
+                        virtualFileSystem[filePath] = fileContent;
+                        currentOpenFile = filePath;
+                        projectFilesOutput.push({ path: filePath, content: fileContent });
+                        response += `<CodeProject id="${currentV0ProjectId}">\n\`\`\`${filePath.endsWith('.tsx') ? 'tsx' : 'txt'} file="${filePath}"\n${fileContent}\n\`\`\`\n</CodeProject>\nSuccessfully created and selected \`${filePath}\`.`;
+
+                    } else if (createComponentMatch) {
+                        const componentNameInput = createComponentMatch[2];
+                        const kebabCaseName = componentNameInput.replace(/([A-Z])/g, "-$1").toLowerCase().replace(/^-/, "");
+                        const pascalCaseName = kebabCaseName.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+                        const propsDescription = createComponentMatch[3] ? createComponentMatch[3].trim() : `message?: string;`;
+                        const defaultPropValue = propsDescription.includes("message?: string") ? `message = "Hello from ${pascalCaseName}!"` : "";
+                        const filePath = `components/${kebabCaseName}.tsx`;
+
+                        let imports = new Set(["import React from 'react';"]);
+                        let jsxBodyElements = [];
+
+                        if (propsDescription.toLowerCase().includes("button")) { imports.add(`import { Button } from '@/components/ui/button';`); jsxBodyElements.push(`<Button>Action Button</Button>`);}
+                        if (propsDescription.toLowerCase().includes("card")) { imports.add(`import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';`); jsxBodyElements.push(`<Card><CardHeader><CardTitle>Info Card</CardTitle></CardHeader><CardContent><p>Details...</p></CardContent></Card>`);}
+
+                        let fileContent = Array.from(imports).join('\n') + '\n\n';
+                        fileContent += `interface ${pascalCaseName}Props {\n  ${propsDescription}\n  // TODO: Define actual props based on requirements\n}\n\n`;
+                        fileContent += `const ${pascalCaseName}: React.FC<${pascalCaseName}Props> = ({ ${defaultPropValue} }) => {\n`;
+                        fileContent += `  return (\n    <div className="p-4 border rounded-lg shadow-md">\n`;
+                        fileContent += `      <h3 className="text-lg font-semibold mb-2">${pascalCaseName}</h3>\n`;
+                        if (defaultPropValue.includes("message")) fileContent += `      {message && <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>}\n`;
+                        jsxBodyElements.forEach(jsx => fileContent += `      ${jsx}\n`);
+                        fileContent += `      {/* Component logic for: "${escapeHtml(propsDescription)}" */}\n    </div>\n  );\n};\n\nexport default ${pascalCaseName};\n`;
+
+                        virtualFileSystem[filePath] = fileContent;
+                        currentOpenFile = filePath;
+                        projectFilesOutput.push({ path: filePath, content: fileContent });
+                        response += `<CodeProject id="${currentV0ProjectId}">\n\`\`\`tsx file="${filePath}"\n${fileContent}\n\`\`\`\n</CodeProject>\nCreated component \`${filePath}\`. Import with \`import ${pascalCaseName} from '@/components/${kebabCaseName}';\`.`;
+
+                    } else if (quickEditMatch) {
+                        const filePath = quickEditMatch[1].trim();
+                        const oldText = quickEditMatch[2];
+                        const newText = quickEditMatch[3];
+                        let editInstruction = `Instruction: Modify content as per request "${userMessage.replace(quickEditMatch[0], "...")}"`;
+
+                        if (oldText && newText) {
+                            editInstruction = `Replace "${escapeHtml(oldText)}" with "${escapeHtml(newText)}"`;
+                        } else if (quickEditMatch[4]) {
+                             editInstruction = `Apply changes: "${escapeHtml(quickEditMatch[4].trim())}"`;
+                        }
+
+                        response += `<Thinking>Attempting to edit \`${filePath}\`. ${editInstruction}</Thinking>\n`;
+                        response += `<QuickEdit file="${escapeHtml(filePath)}">${escapeHtml(editInstruction)}</QuickEdit>\n`;
+
+                        if (virtualFileSystem.hasOwnProperty(filePath)) {
+                            if (oldText && newText) {
+                                virtualFileSystem[filePath] = virtualFileSystem[filePath].replace(new RegExp(escapeRegExp(oldText), 'g'), newText);
+                                response += `File \`${filePath}\` updated.`;
+                            } else {
+                                response += `Edit instruction for \`${filePath}\` noted. Specific text replacement was not clear from the prompt, so no automated change was made.`;
+                            }
+                            currentOpenFile = filePath;
+                            projectFilesOutput.push({ path: filePath, content: virtualFileSystem[filePath] });
+                        } else {
+                            response += `Error: File \`${filePath}\` not found for editing.`;
+                        }
+                    } else if (deleteFileMatch) {
+                        const filePathToDelete = deleteFileMatch[1].trim();
+                        response += `<Thinking>Attempting to delete file: ${escapeHtml(filePathToDelete)}</Thinking>\n`;
+                        response += `<DeleteFile file="${escapeHtml(filePathToDelete)}" />\n`;
+
+                        if (virtualFileSystem.hasOwnProperty(filePathToDelete)) {
+                            delete virtualFileSystem[filePathToDelete];
+                            response += `File \`${escapeHtml(filePathToDelete)}\` has been deleted.`;
+
+                            // Update currentProjectFiles if the deleted file was part of it
+                            currentProjectFiles = currentProjectFiles.filter(f => f.path !== filePathToDelete);
+                            projectFilesOutput = [...currentProjectFiles]; // Send the updated list
+
+                            if (currentOpenFile === filePathToDelete) {
+                                currentOpenFile = (currentProjectFiles.length > 0) ? currentProjectFiles[0].path : (virtualFileSystem['app/page.tsx'] ? 'app/page.tsx' : '');
+                                if (!currentOpenFile && Object.keys(virtualFileSystem).length > 0) {
+                                    currentOpenFile = Object.keys(virtualFileSystem)[0]; // Fallback to any existing file
+                                }
+                            }
+                        } else {
+                            response += `Error: File \`${escapeHtml(filePathToDelete)}\` not found.`;
+                             // Still send current project files context even if delete failed for a non-existent file
+                            projectFilesOutput = currentProjectFiles.map(f => ({path: f.path, content: virtualFileSystem[f.path] || ""}));
+
+                        }
+                    }
+                    else if (addElementMatch) {
+                        const elementType = addElementMatch[1].toLowerCase();
+                        let textOrSrc = addElementMatch[2] || `Sample ${elementType}`;
+                        let userClasses = addElementMatch[3] || "";
+                        const targetFile = addElementMatch[4] || currentOpenFile;
+                        ensureFileExists(targetFile);
+
+                        let newElementCode = "";
+                        let importStatements = new Set();
+                        const isTsxTarget = targetFile.endsWith('.tsx') || targetFile.endsWith('.jsx');
+
+                        if (isTsxTarget) {
+                            switch(elementType) {
+                                case 'heading': newElementCode = `<h2 className={"text-2xl font-bold my-2 " + userClasses}>${escapeHtml(textOrSrc)}</h2>`; break;
+                                case 'paragraph': newElementCode = `<p className={"my-1 " + userClasses}>${escapeHtml(textOrSrc)}</p>`; break;
+                                case 'button':
+                                    newElementCode = `<Button variant="outline" className={"${userClasses}"}>${escapeHtml(textOrSrc)}</Button>`;
+                                    importStatements.add(`import { Button } from '@/components/ui/button';`); break;
+                                case 'card':
+                                    newElementCode = `<Card className={"w-[350px] " + userClasses}>\n  <CardHeader>\n    <CardTitle>${escapeHtml(textOrSrc)}</CardTitle>\n    <CardDescription>Description</CardDescription>\n  </CardHeader>\n  <CardContent><p>Content</p></CardContent>\n  <CardFooter><Button>Action</Button></CardFooter>\n</Card>`;
+                                    importStatements.add(`import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';`);
+                                    importStatements.add(`import { Button } from '@/components/ui/button';`); break;
+                                case 'input':
+                                    newElementCode = `<Input type="text" placeholder="${escapeHtml(textOrSrc || 'Enter text...')}" className={"${userClasses}"} />`;
+                                    importStatements.add(`import { Input } from '@/components/ui/input';`); break;
+                                case 'alert':
+                                    newElementCode = `<Alert className={"${userClasses}"}>\n  <AlertTitle>${escapeHtml(textOrSrc || 'Alert Title')}</AlertTitle>\n  <AlertDescription>Alert content.</AlertDescription>\n</Alert>`;
+                                    importStatements.add(`import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';`); break;
+                                case 'avatar':
+                                    const fallback = textOrSrc ? textOrSrc.substring(0,2).toUpperCase() : "AV";
+                                    newElementCode = `<Avatar className={"${userClasses}"}>\n  <AvatarImage src="/placeholder.svg?height=40&width=40&query=avatar" alt="Avatar" />\n  <AvatarFallback>${escapeHtml(fallback)}</AvatarFallback>\n</Avatar>`;
+                                    importStatements.add(`import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';`); break;
+                                case 'dialog':
+                                    const dialogTitle = textOrSrc || "Dialog Title";
+                                    newElementCode = `<Dialog>\n  <DialogTrigger asChild><Button variant="outline">Open ${escapeHtml(dialogTitle)}</Button></DialogTrigger>\n  <DialogContent className="sm:max-w-[425px] ${userClasses}">\n    <DialogHeader>\n      <DialogTitle>${escapeHtml(dialogTitle)}</DialogTitle>\n      <DialogDescription>Make changes here. Click save when you're done.</DialogDescription>\n    </DialogHeader>\n    {/* Add form fields or content here */}\n    <DialogFooter>\n      <Button type="submit">Save changes</Button>\n    </DialogFooter>\n  </DialogContent>\n</Dialog>`;
+                                    importStatements.add(`import { Button } from '@/components/ui/button';`);
+                                    importStatements.add(`import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';`);
+                                    break;
+                                case 'select':
+                                    newElementCode = `<Select>\n  <SelectTrigger className={"w-[180px] " + userClasses}>\n    <SelectValue placeholder="${escapeHtml(textOrSrc || 'Theme')}" />\n  </SelectTrigger>\n  <SelectContent>\n    <SelectItem value="light">Light</SelectItem>\n    <SelectItem value="dark">Dark</SelectItem>\n    <SelectItem value="system">System</SelectItem>\n  </SelectContent>\n</Select>`;
+                                    importStatements.add(`import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';`);
+                                    break;
+                                case 'checkbox':
+                                    const checkboxId = `cb-${Math.random().toString(16).slice(2, 8)}`;
+                                    newElementCode = `<div className="flex items-center space-x-2 ${userClasses}">\n  <Checkbox id="${checkboxId}" />\n  <label htmlFor="${checkboxId}" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">${escapeHtml(textOrSrc || 'Accept')}</label>\n</div>`;
+                                    importStatements.add(`import { Checkbox } from '@/components/ui/checkbox';`);
+                                    break;
+                                case 'div': newElementCode = `<div className={"p-2 border " + userClasses}>${escapeHtml(textOrSrc)}</div>`; break;
+                                case 'image':
+                                    const query = textOrSrc.startsWith('http') ? textOrSrc.split('/').pop().split('.')[0] : textOrSrc;
+                                    const imgSrc = textOrSrc.startsWith('http') ? textOrSrc : `/placeholder.svg?height=150&width=300&query=${encodeURIComponent(query)}`;
+                                    newElementCode = `<img src="${imgSrc}" alt="${escapeHtml(textOrSrc)}" className={"rounded-md shadow-lg " + userClasses} />`; break;
+                                case 'icon':
+                                     const iconNamePascal = textOrSrc.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+                                     const iconClasses = userClasses || "h-6 w-6";
+                                     newElementCode = `<${iconNamePascal} className={"${iconClasses}"} />`;
+                                     importStatements.add(`import { ${iconNamePascal} } from 'lucide-react';`); break;
+                                default: newElementCode = `<div className="${userClasses}">${escapeHtml(textOrSrc)} {/* Unknown element type: ${elementType} */ }</div>`;
+                            }
+                        } else {
+                             newElementCode = `<${elementType} class="${userClasses}">${escapeHtml(textOrSrc)}</${elementType}>`;
+                        }
+
+                        let existingContent = virtualFileSystem[targetFile] || "";
+                        let combinedImports = "";
+                        importStatements.forEach(imp => {
+                            if (!existingContent.includes(imp.trim())) {
+                                combinedImports += imp + "\n";
+                            }
+                        });
+
+                        if (isTsxTarget && existingContent.includes("return (")) {
+                            const returnEndIndex = existingContent.lastIndexOf(')');
+                            if (returnEndIndex > -1) {
+                                const beforeReturnEnd = existingContent.substring(0, returnEndIndex);
+                                const afterReturnEnd = existingContent.substring(returnEndIndex);
+                                const lastTagClose = beforeReturnEnd.lastIndexOf('>');
+                                if (lastTagClose > -1 && lastTagClose > beforeReturnEnd.lastIndexOf('(')) {
+                                     virtualFileSystem[targetFile] = combinedImports + beforeReturnEnd.substring(0, lastTagClose + 1) + `\n      ${newElementCode}\n    ` + beforeReturnEnd.substring(lastTagClose + 1) + afterReturnEnd;
+                                } else {
+                                     virtualFileSystem[targetFile] = combinedImports + beforeReturnEnd + `      ${newElementCode}\n    ` + afterReturnEnd;
+                                }
+                            } else {
+                                virtualFileSystem[targetFile] = combinedImports + existingContent + `\n${newElementCode}\n`;
+                            }
+                        } else {
+                            virtualFileSystem[targetFile] = combinedImports + existingContent + `\n${newElementCode}\n`;
+                        }
+                        currentOpenFile = targetFile;
+                        projectFilesOutput.push({ path: targetFile, content: virtualFileSystem[targetFile] });
+                        response += `Added a ${elementType} to \`${targetFile}\`. Imports (if any) were added/checked. Preview updated.\n\`\`\`${isTsxTarget ? 'tsx' : 'html'} \n${newElementCode}\n\`\`\``;
+
+                    } else if (styleRequestMatch) {
+                        const styleTargetType = styleRequestMatch[1];
+                        const tailwindClasses = styleRequestMatch[2].toLowerCase();
+                        let currentFileContent = virtualFileSystem[currentOpenFile] || "";
+
+                        let lastMatchIndex = -1;
+                        let lastMatchTag = "";
+                        const tagRegex = new RegExp(`<(${styleTargetType === 'heading' ? 'h[1-6]' : styleTargetType === 'icon' ? '[A-Z][a-zA-Z0-9]+' : styleTargetType})([^>]*)>`, "gi");
+                        let match;
+                        while((match = tagRegex.exec(currentFileContent)) !== null) {
+                            lastMatchIndex = match.index;
+                            lastMatchTag = match[0];
+                        }
+
+                        if (lastMatchIndex !== -1) {
+                            let newTag = lastMatchTag;
+                            if (newTag.includes('className="')) {
+                                newTag = newTag.replace(/className="([^"]*)"/, (m, p1) => `className="${p1} ${tailwindClasses}"`);
+                            } else if (newTag.includes("className={'")) {
+                                 newTag = newTag.replace(/className={'([^']*)'}/, (m,p1) => `className={'${p1} ${tailwindClasses}'}`);
+                            } else {
+                                const insertPos = newTag.lastIndexOf('>') !== -1 ? newTag.lastIndexOf('>') : newTag.length;
+                                newTag = newTag.substring(0, insertPos) + ` className="${tailwindClasses}"` + newTag.substring(insertPos);
+                            }
+                            virtualFileSystem[currentOpenFile] = currentFileContent.substring(0, lastMatchIndex) + newTag + currentFileContent.substring(lastMatchIndex + lastMatchTag.length);
+                            response += `Attempted to apply style '${tailwindClasses}' to the last ${styleTargetType} in \`${currentOpenFile}\`. Please verify the result.`;
+                            projectFilesOutput.push({ path: currentOpenFile, content: virtualFileSystem[currentOpenFile] });
+                        } else {
+                            response += `Couldn't find a '${styleTargetType}' to style in \`${currentOpenFile}\`.`;
+                        }
+                    } else if (lowerMessage.startsWith("what is your name") || lowerMessage.startsWith("who are you")) {
+                        response += `I am v0, Vercel's AI-powered assistant.`;
+                    }
+                    else {
+                       response += "v0: I can help with Next.js, React, Tailwind. Try 'create file app/about/page.tsx with a heading About Us'.";
+                    }
+                // --- JulesAI Persona Logic ---
+                } else if (persona.id === 'julesAI') {
+                    thinking = `Jules: Deconstructing request: "${userMessage.substring(0,60)}...". Formulating execution plan...`;
+                    const createPlanMatch = lowerMessage.match(/^(?:build|implement|develop|design|create)\s+(?:a|an|the)\s+(.+)/i);
+                    const createFileContentMatch = lowerMessage.match(/create file [`']?([\w\/\.-]+)[`']?\s+with content\s*:\s*['"]?([\s\S]+?)['"]?$/i) || lowerMessage.match(/create file [`']?([\w\/\.-]+)[`']?\s+with\s+[`']?([\s\S]+?)['"]?$/i);
+                    const createJsFunctionMatch = lowerMessage.match(/(?:write|create|generate|give me)\s+(?:a\s+)?(?:javascript|js)\s+function\s+(?:to|for)\s+([\w\s]+)(?:\s+that\s+takes\s+([\w\s,]+))?/i);
+
+                    if (createFileContentMatch) {
+                        const filePath = createFileContentMatch[1].trim();
+                        const fileContent = createFileContentMatch[2].trim();
+                        ensureFileExists(filePath); virtualFileSystem[filePath] = fileContent; currentOpenFile = filePath;
+                        response = `Jules: Plan complete.\n1. *Create file \`${filePath}\` with specified content.* - Done.`;
+                        code = fileContent;
+                    } else if (createJsFunctionMatch) {
+                        const functionPurpose = createJsFunctionMatch[1].trim();
+                        let rawParams = createJsFunctionMatch[2] ? createJsFunctionMatch[2].trim() : "";
+                        const functionName = functionPurpose.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/gi, '');
+                        let functionParams = rawParams ? rawParams.split(',').map(p => p.trim()).join(', ') : (functionPurpose.includes("date") || functionPurpose.includes("time") || functionPurpose.includes("random") ? "" : "input");
+                        let exampleParams = rawParams ? rawParams.split(',').map(p => `'sample ${p.trim()}'`).join(', ') : (functionParams==="" ? "" : "'sample input'");
+                        let functionBody = `// TODO: Implement ${functionPurpose}\n  console.log("${functionPurpose} called${functionParams ? " with: " + functionParams : ""}");`;
+                        if (functionPurpose.includes("current date")) functionBody = `return new Date().toLocaleDateString();`;
+                        else if (functionPurpose.includes("add two numbers") && functionParams.includes(",")) {
+                            const paramsArray = functionParams.split(',').map(p => p.trim());
+                            if (paramsArray.length === 2) functionBody = `return ${paramsArray[0]} + ${paramsArray[1]};`;
+                        } else functionBody += `\n  return null;`;
+                        code = `function ${functionName}(${functionParams}) {\n  ${functionBody}\n}\n\n// Example usage:\n// console.log(${functionName}(${exampleParams}));`;
+                        response = `Jules: Generated JavaScript function for "${functionPurpose}".`;
+                    } else if (createPlanMatch) {
+                        const feature = createPlanMatch[1];
+                        response = `Jules: Okay, for building/implementing **${feature}**, here's my initial plan:\n*   Define requirements for ${feature}.\n*   Design data structures and interfaces.\n*   Break down implementation into smaller tasks.\n*   Write tests.\n*   Deploy.`;
+                    } else {
+                        response = `Jules: Task: "${userMessage}". My primary function is software engineering tasks. How can I assist with planning or coding?`;
+                    }
+                // --- Generic LLM Personas Logic ---
+                } else {
+                    const personaDisplayName = persona.displayName;
+                    if (lowerMessage.includes("poem") || lowerMessage.includes("story")) {
+                        response = `As ${personaDisplayName}, here's a short piece about "${userMessage.substring(userMessage.indexOf("about")+6)}":\n\nThe digital dawn, a screen aglow,\nLines of logic, row on row... (a brief creative snippet).`;
+                    } else if (lowerMessage.match(/^(what is|what's|explain|tell me about)\s+(.+)/i)) {
+                        const topicMatch = lowerMessage.match(/^(what is|what's|explain|tell me about)\s+(.+)/i);
+                        const topic = topicMatch ? topicMatch[2].replace(/\?$/,'').trim() : "that topic";
+                        let intro = (persona.id === "claudeSonnet") ? "Certainly. " : (persona.id === "chatGPT4") ? "That's interesting! " : "Essentially, ";
+                        response = `As ${personaDisplayName}: ${intro}**${escapeHtml(topic)}** refers to... [simulated explanation about ${escapeHtml(topic)}...]. Key aspects include A, B, and C.`;
+                    } else if (lowerMessage.includes("python code for") || (lowerMessage.includes("python") && lowerMessage.includes("script"))) {
+                        code = `# Python: ${userMessage}\ndef sample_python_func():\n  print("Hello from simulated Python")\nsample_python_func()`;
+                        response = `As ${personaDisplayName}, here's a conceptual Python snippet:`;
+                    } else if (lowerMessage.includes("javascript") && (lowerMessage.includes("code") || lowerMessage.includes("function"))) {
+                        code = `// JavaScript: ${userMessage}\nfunction sampleJsFunc() {\n  console.log("Hello from simulated JavaScript");\n}\nsampleJsFunc();`;
+                        response = `As ${personaDisplayName}, here's a conceptual JavaScript snippet:`;
+                    } else {
+                        response = `I am ${personaDisplayName}. You asked: "${userMessage}". I can help with general queries, writing, or simple code ideas.`;
+                    }
                 }
-                if (classes && html) responseText += ` with classes '${escapeHtml(classMatch[1])}'.`;
-                return { html, responseText };
+
+                return { thinking: (persona.thinkingStyle === 'generic_thinking_message' ? thinking : ""), response, code, projectFiles: projectFilesOutput };
             }
 
+            /**
+             * Main function to process user input, trigger AI simulation, and update UI.
+             * @param {string} userMessage - The user's chat message.
+             */
             function processUserRequest(userMessage) {
-                const lowerMessage = userMessage.toLowerCase();
-                let newElementHtml = '';
-                let aiResponseText = '';
-                let commandProcessed = false;
+                const currentPersona = getPersonaById(currentPersonaId);
+                const lowerUserMessage = userMessage.toLowerCase();
 
-                ensureFileExists(currentOpenFile); // Ensure currentOpenFile is valid before operations
+                if (currentPersona && currentPersona.thinkingStyle === 'generic_thinking_message') {
+                    addMessageToChat(`[${currentPersona.displayName} is processing: "${userMessage.substring(0,30)}..."]`, "ai", false, true);
+                }
 
-                addMessageToChat("[Thinking] Processing your request...", "ai");
+                setTimeout(() => {
+                    const {
+                        thinking: simulatedThinkingText,
+                        response: aiResponseMessage,
+                        code: distinctCodeOutput,
+                        projectFiles: v0ProjectFiles
+                    } = getSimulatedAiResponse(userMessage, currentPersonaId);
 
-                const createFileMatch = lowerMessage.match(/create file ([\w\/\.-]+)(?: with (.*))?/i);
-                if (createFileMatch) {
-                    const filePath = createFileMatch[1].trim();
-                    const contentDescription = createFileMatch[2] ? createFileMatch[2].trim() : "";
+                    addMessageToChat(aiResponseMessage, 'ai');
 
-                    virtualFileSystem[filePath] = "";
-                    currentOpenFile = filePath;
-                    aiResponseText = `<strong>Okay, I've created the file [${filePath}](ask://ask/What+is+${encodeURIComponent(filePath)}).</strong>`;
+                    if (distinctCodeOutput) {
+                        addMessageToChat(distinctCodeOutput, 'ai', true);
+                    }
 
-                    if (contentDescription) {
-                        const tempGenerated = generateElement(contentDescription, `Initial content for [${filePath}](ask://ask/Tell+me+more+about+${encodeURIComponent(filePath)})`);
-                        if (tempGenerated.html) {
-                            virtualFileSystem[filePath] = tempGenerated.html;
-                            aiResponseText += ` I've added some initial content.`;
-                            newElementHtml = tempGenerated.html; // To show in chat
-                        } else {
-                             aiResponseText += ` What would you like to put in it?`;
+                    if (currentPersona && currentPersona.id === 'v0') {
+                        if (v0ProjectFiles && v0ProjectFiles.length > 0) {
+                            updateFileTabs(v0ProjectFiles);
+                            let foundOpenFile = v0ProjectFiles.find(f => f.path === currentOpenFile);
+                            if (!foundOpenFile && v0ProjectFiles.length > 0) {
+                                currentOpenFile = v0ProjectFiles.find(f => f.path.includes("page.tsx"))?.path || v0ProjectFiles[0].path;
+                            }
+                            document.querySelectorAll('#fileTabsContainer .file-tab').forEach(t => {
+                                t.classList.toggle('active', t.dataset.filePath === currentOpenFile);
+                            });
+                        } else if (!lowerUserMessage.startsWith("add ") && !lowerUserMessage.startsWith("make ") && !lowerUserMessage.startsWith("style ") && !quickEditMatch && !deleteFileMatch) {
+                            // Clear tabs if it's not a file modification/addition command for an existing project context
+                            // and if no new project files were generated by other means (like create file/component).
+                            updateFileTabs([]);
                         }
                     } else {
-                        aiResponseText += ` It's currently empty.`;
+                        updateFileTabs([]);
                     }
-                    commandProcessed = true;
-                } else {
-                    const styleMatch = lowerMessage.match(/(?:make|style|set) last (heading|paragraph|button) ([\w-]+) (?:to |is |be |)?([\w#\s\."%]+)/i);
-                    if (styleMatch && virtualFileSystem[currentOpenFile] !== undefined) {
-                        const targetType = styleMatch[1];
-                        const stylePropertyInput = styleMatch[2];
-                        let styleValue = styleMatch[3].trim();
 
-                        const validCssProperties = {'color': true, 'background-color': true, 'background': true, 'font-size': true, 'padding': true, 'margin': true, 'border': true, 'width': true, 'height': true, 'text-align':true};
-                        const propertyMap = {'bg': 'background-color', 'bgcolor': 'background-color', 'font': 'font-size', 'align': 'text-align'};
-                        const cssProperty = propertyMap[stylePropertyInput] || stylePropertyInput;
-
-                        if (!validCssProperties[cssProperty] && !cssProperty.startsWith('border-')) {
-                            aiResponseText = `Sorry, I don't know how to apply the style property '${stylePropertyInput}'. Valid properties include color, background-color, font-size, padding, margin, border, width, height, text-align.`;
-                        } else {
-                            if ((cssProperty === 'font-size' || cssProperty === 'padding' || cssProperty === 'margin' || cssProperty === 'width' || cssProperty === 'height') && /^\d+(\.\d+)?$/.test(styleValue) && !styleValue.endsWith("px") && !styleValue.endsWith("em") && !styleValue.endsWith("%") && !styleValue.endsWith("rem")&& !styleValue.endsWith("vw")&& !styleValue.endsWith("vh") ) {
-                                styleValue += 'px';
-                            }
-                            let elementTypeRegexStr = targetType === "heading" ? "h[1-6]" : targetType;
-                            const lastElementMatch = findLastElementOfTypeInString(virtualFileSystem[currentOpenFile], elementTypeRegexStr);
-
-                            if (lastElementMatch) {
-                                virtualFileSystem[currentOpenFile] = applyStyleToElementInString(virtualFileSystem[currentOpenFile], lastElementMatch, cssProperty, styleValue);
-                                aiResponseText = `<strong>Okay, I've styled the last ${targetType} in [${currentOpenFile}](ask://ask/Details+about+${encodeURIComponent(currentOpenFile)}).</strong>`;
-                            } else {
-                                aiResponseText = `I couldn't find a ${targetType} in [${currentOpenFile}](ask://ask/Show+content+of+${encodeURIComponent(currentOpenFile)}) to style. Try creating one first.`;
-                            }
-                        }
-                        commandProcessed = true;
-                    } else {
-                        const jsAlertMatch = lowerMessage.match(/(?:make|set|give) (?:last |the )?button (?:show |an )?alert saying ['"]([^'"]+)['"]/i);
-                        if (jsAlertMatch && virtualFileSystem[currentOpenFile] !== undefined) {
-                            const alertText = jsAlertMatch[1];
-                            const lastButtonMatch = findLastElementOfTypeInString(virtualFileSystem[currentOpenFile], 'button');
-                            if (lastButtonMatch) {
-                                virtualFileSystem[currentOpenFile] = addAttributeToElementInString(virtualFileSystem[currentOpenFile], lastButtonMatch, 'onclick', `alert('${escapeHtml(alertText)}')`);
-                                aiResponseText = `<strong>Okay, I've made the last button in [${currentOpenFile}](ask://ask/Info+on+${encodeURIComponent(currentOpenFile)}) show an alert.</strong> (Note: JS generation is basic).`;
-                            } else {
-                                aiResponseText = `I couldn't find a button in [${currentOpenFile}](ask://ask/Content+of+${encodeURIComponent(currentOpenFile)}) to add an alert to.`;
-                            }
-                            commandProcessed = true;
-                        } else {
-                            const elementGenResult = generateElement(userMessage, `Content for ${currentOpenFile}`);
-                            if (elementGenResult.html) {
-                                newElementHtml = elementGenResult.html;
-                                aiResponseText = elementGenResult.responseText || `<strong>Okay, I've added an element to [${currentOpenFile}](ask://ask/What+is+in+${encodeURIComponent(currentOpenFile)}):</strong>`;
-                                commandProcessed = true;
-                            }
-                        }
-                    }
-                }
-
-                if (!commandProcessed && !aiResponseText) {
-                    aiResponseText = "Sorry, I can currently create files (e.g., 'create file app/page.tsx with a heading Welcome'), add/style elements (headings, paragraphs, buttons) in the current file, or make buttons show alerts. Example: 'make last heading red'";
-                }
-
-                addMessageToChat(aiResponseText, 'ai');
-
-                if (newElementHtml) {
-                    virtualFileSystem[currentOpenFile] = (virtualFileSystem[currentOpenFile] || "") + (virtualFileSystem[currentOpenFile] ? "\n" : "") + newElementHtml;
-                    addMessageToChat(newElementHtml, 'ai', true);
-                }
-
-                renderPagePreview();
+                    renderPagePreview();
+                }, 500 + Math.random() * 500);
             }
 
+            // --- Event Listeners ---
             sendButton.addEventListener('click', handleUserInput);
             userInputEl.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
                     handleUserInput();
                 }
             });
-            renderPagePreview(); // Initial render in case there's a default file with content (though unlikely here)
         });
     </script>
 </body>
